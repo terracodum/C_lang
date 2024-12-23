@@ -1,25 +1,33 @@
-#include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 int main() {
-    HANDLE stdInput = GetStdHandle(STD_INPUT_HANDLE);
-    HANDLE stdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    printf("Хэндл стандартного ввода: %p\n", stdInput);
-    printf("Хэндл стандартного вывода: %p\n", stdOutput);
-
     char buffer[256];
-    DWORD bytesRead, bytesWritten;
+    ssize_t bytesRead;
 
-    const char* prompt = "Введите текст: ";
-    WriteFile(stdOutput, prompt, strlen(prompt), &bytesWritten, NULL);
+    // Проверка, если ввод идет из терминала
+    if (isatty(STDIN_FILENO)) {
+        printf("Введите текст: ");
+        fflush(stdout); // Принудительный вывод
+    }
 
-    ReadFile(stdInput, buffer, sizeof(buffer) - 1, &bytesRead, NULL);
-    buffer[bytesRead] = '\0';
+    // Чтение данных из стандартного ввода
+    bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
+    if (bytesRead < 0) {
+        perror("Ошибка чтения");
+        return 1;
+    }
+    buffer[bytesRead] = '\0'; // Завершение строки
 
-    const char* outputMessage = "Вы ввели: ";
-    WriteFile(stdOutput, outputMessage, strlen(outputMessage), &bytesWritten, NULL);
-    WriteFile(stdOutput, buffer, bytesRead, &bytesWritten, NULL);
+    // Проверка, если вывод идет в терминал
+    if (isatty(STDOUT_FILENO)) {
+        printf("Вы ввели: %s", buffer);
+    } else {
+       // Измените на printf для тестирования
+        printf("Вы ввели: %s", buffer);
+    }
 
     return 0;
 }
